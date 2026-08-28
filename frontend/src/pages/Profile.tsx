@@ -1,0 +1,8 @@
+import { useState } from "react";
+import { useAuth } from "@/auth/AuthContext";
+import { apiClient } from "@/api/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export function Profile() { const { user } = useAuth(); const [name, setName] = useState(user?.name ?? ""); const [message, setMessage] = useState(""); if (!user) return null; async function update() { await apiClient.patch("/users/me", { name }); setMessage("Profile updated successfully."); } return <div className="max-w-2xl space-y-6"><div><h2 className="text-3xl font-bold tracking-tight">Profile</h2><p className="text-muted-foreground">Manage your account details and access.</p></div><Card><CardHeader><CardTitle>Account details</CardTitle></CardHeader><CardContent className="space-y-5"><label className="block text-sm font-medium">Name<Input className="mt-2" value={name} onChange={(event) => setName(event.target.value)} /></label><div className="grid gap-4 sm:grid-cols-2"><div><p className="text-sm font-medium">Email</p><p className="mt-2 text-sm text-muted-foreground">{user.email}</p></div><div><p className="text-sm font-medium">Role</p><p className="mt-2 text-sm text-muted-foreground">{user.role}</p></div></div><div className="flex items-center justify-between border-t pt-5"><span className="text-sm text-muted-foreground">Account status: {user.isActive ? "Active" : "Inactive"}</span><Button onClick={update}>Save changes</Button></div>{message && <p className="text-sm text-primary">{message}</p>}</CardContent></Card></div>; }
