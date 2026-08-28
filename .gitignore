@@ -30,3 +30,4 @@ Thumbs.db
 # Secrets / DB
 *.sqlite
 *.sqlite-journal
+*.tsbuildinfo
