@@ -10,6 +10,8 @@ import { ForgotPassword } from "./pages/ForgotPassword";
 import { Profile } from "./pages/Profile";
 import { Users } from "./pages/Users";
 import { MasterDataPage } from "./pages/MasterDataPage";
+import { Inventory } from "./pages/Inventory";
+import { Transfers } from "./pages/Transfers";
 
 function App() {
   return (
@@ -28,8 +30,8 @@ function App() {
             <Route path="warehouses" element={<MasterDataPage resource="warehouses" />} />
             <Route path="products" element={<MasterDataPage resource="products" />} />
             <Route path="categories" element={<MasterDataPage resource="categories" />} />
-            <Route path="inventory" element={<PlaceholderPage title="Inventory" description="View and adjust stock levels across all locations." />} />
-            <Route path="transfers" element={<PlaceholderPage title="Transfers" description="Manage stock transfers between warehouses." />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="transfers" element={<Transfers />} />
             <Route path="reservations" element={<PlaceholderPage title="Reservations" description="Manage temporary stock reservations for orders." />} />
             <Route path="reconciliation" element={<PlaceholderPage title="Reconciliation" description="Perform physical counts and reconcile inventory." />} />
             <Route path="suppliers" element={<MasterDataPage resource="suppliers" />} />
