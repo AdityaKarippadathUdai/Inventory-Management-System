@@ -67,4 +67,7 @@ npm run dev
 The frontend will run on `http://localhost:5173`.
 
 ### Phase 4 Inventory
-Inventory is tracked per product and warehouse. Use the Inventory screen to review on-hand, reserved, available, low-stock, and out-of-stock positions, receive stock, and perform audited adjustments. Every quantity mutation is transactional and appends immutable stock history. Transfers, reservations, and reconciliation remain future phases.
+Inventory is tracked per product and warehouse. Use the Inventory screen to review on-hand, reserved, available, low-stock, and out-of-stock positions, receive stock, and perform audited adjustments. Every quantity mutation is transactional and appends immutable stock history.
+
+### Phase 5 Transfers
+Transfers move stock between authorized warehouses through the lifecycle `DRAFT -> PENDING_APPROVAL -> APPROVED -> IN_TRANSIT -> RECEIVED`. Approval reserves source availability, dispatch consumes the reservation into `TRANSFER_OUT`, and receiving creates destination `TRANSFER_IN` history. Transfer, reservation, and reconciliation workflows remain separate concerns beyond this phase.
