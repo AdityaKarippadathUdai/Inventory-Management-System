@@ -16,8 +16,13 @@ async function main() {
   const warehouses = [{ code: 'WH-001', name: 'Main Warehouse', city: 'Central City' }, { code: 'WH-002', name: 'North Warehouse', city: 'North District' }, { code: 'WH-003', name: 'South Warehouse', city: 'South District' }];
   for (const warehouse of warehouses) await prisma.warehouse.upsert({ where: { code: warehouse.code }, update: warehouse, create: warehouse });
   const roots = ['Electronics', 'Furniture'];
-  for (const name of roots) { const root = await prisma.category.upsert({ where: { name_parentId: { name, parentId: null } }, update: {}, create: { name } }); const children = name === 'Electronics' ? ['Laptops', 'Mobile Phones', 'Accessories'] : ['Chairs', 'Desks']; for (const child of children) await prisma.category.upsert({ where: { name_parentId: { name: child, parentId: root.id } }, update: {}, create: { name: child, parentId: root.id } }); }
+  for (const name of roots) { const existing = await prisma.category.findFirst({ where: { name, parentId: null } }); const root = existing ?? await prisma.category.create({ data: { name } }); const children = name === 'Electronics' ? ['Laptops', 'Mobile Phones', 'Accessories'] : ['Chairs', 'Desks']; for (const child of children) await prisma.category.upsert({ where: { name_parentId: { name: child, parentId: root.id } }, update: {}, create: { name: child, parentId: root.id } }); }
   await prisma.supplier.upsert({ where: { code: 'SUP-001' }, update: {}, create: { code: 'SUP-001', name: 'Northstar Distribution', contactPerson: 'Morgan Lee', email: 'morgan@northstar.example' } });
+  await prisma.supplier.upsert({ where: { code: 'SUP-002' }, update: {}, create: { code: 'SUP-002', name: 'Apex Components', contactPerson: 'Riley Chen', email: 'riley@apex.example' } });
+  const laptops = await prisma.category.findFirstOrThrow({ where: { name: 'Laptops' } });
+  const phones = await prisma.category.findFirstOrThrow({ where: { name: 'Mobile Phones' } });
+  await prisma.product.upsert({ where: { sku: 'LAP-001' }, update: {}, create: { sku: 'LAP-001', name: 'Operations Laptop 14', brand: 'OptiTech', unit: 'unit', categoryId: laptops.id, costPrice: 620, sellingPrice: 899, price: 899, reorderLevel: 10, maximumStockLevel: 100 } });
+  await prisma.product.upsert({ where: { sku: 'PHN-001' }, update: {}, create: { sku: 'PHN-001', name: 'Field Scanner Phone', brand: 'OptiTech', unit: 'unit', categoryId: phones.id, costPrice: 210, sellingPrice: 349, price: 349, reorderLevel: 20, maximumStockLevel: 200 } });
   console.log(`Seeded roles and development administrator ${email}`);
 }
 main().finally(() => prisma.$disconnect());
