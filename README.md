@@ -51,7 +51,8 @@ npm install
 cp .env.example .env
 # Ensure DATABASE_URL in .env matches the docker setup
 npx prisma generate
-npx prisma db push
+npx prisma migrate deploy
+SEED_ADMIN_PASSWORD='ChangeMe123!' npx prisma db seed
 npm run start:dev
 ```
 The API will run on `http://localhost:3000`. Swagger documentation is available at `http://localhost:3000/api`.
