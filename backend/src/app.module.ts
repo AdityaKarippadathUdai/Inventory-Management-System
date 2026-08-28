@@ -7,9 +7,10 @@ import { UsersController } from './users.controller.js';
 import { UsersService } from './users.service.js';
 import { PrismaService } from './prisma.service.js';
 import { MasterDataModule } from './master-data.module.js';
+import { InventoryModule } from './inventory.module.js';
 
 @Module({
-  imports: [HealthModule, AuthModule, MasterDataModule],
+  imports: [HealthModule, AuthModule, MasterDataModule, InventoryModule],
   controllers: [AppController, UsersController],
   providers: [AppService, UsersService, PrismaService],
 })
