@@ -23,10 +23,12 @@ The Multi-Warehouse Management System is composed of two independent application
 ## Frontend/Backend Separation
 The frontend and backend are completely separate projects. They do not share a `package.json`, dependencies, or build systems. They communicate exclusively over HTTP via versioned REST APIs (`/api/v1`).
 
-## Authentication Plan (Future)
-- JWT-based authentication.
-- Access token (short-lived) and Refresh token (long-lived, HTTP-only cookie).
-- Role-based access control (RBAC) enforced via NestJS Guards.
+## Phase 2 Authentication and RBAC
+- `AuthService` hashes passwords with Argon2 and issues short-lived access JWTs.
+- Refresh tokens are opaque, rotated on every refresh, hashed before persistence, expired, and revoked on logout/password changes.
+- `JwtAuthGuard` verifies the access token and reloads active-user permissions from PostgreSQL on every protected request.
+- `@RequirePermission(...)` plus `PermissionGuard` enforces permissions at the API boundary. Frontend permission checks only control visibility and never provide security.
+- The frontend keeps the access token in memory and sends the refresh token as an HTTP-only cookie.
 
 ## Redis Plan (Future)
 - Redis will be introduced for:
