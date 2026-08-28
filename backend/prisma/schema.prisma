@@ -24,6 +24,8 @@ model User {
   refreshTokens RefreshToken[]
   resetTokens   PasswordResetToken[]
   managedWarehouses Warehouse[] @relation("WarehouseManager")
+  stockTransactions StockTransaction[]
+  inventoryAdjustments InventoryAdjustment[]
 
   @@index([roleId])
   @@index([isActive])
@@ -109,6 +111,7 @@ model Warehouse {
   transfersOut           StockTransfer[]       @relation("SourceWarehouse")
   transfersIn            StockTransfer[]       @relation("DestinationWarehouse")
   inventoryAdjustments   InventoryAdjustment[]
+  stockTransactions      StockTransaction[]
 
   @@index([name])
   @@index([status])
@@ -172,30 +175,50 @@ model Product {
 }
 
 model Inventory {
-  id          String    @id @default(uuid())
-  warehouseId String
-  productId   String
-  quantity    Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                String    @id @default(uuid())
+  warehouseId       String
+  productId         String
+  quantityOnHand    Int       @default(0)
+  quantityReserved  Int       @default(0)
+  reorderLevel      Int       @default(0)
+  maximumStockLevel Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
   product     Product   @relation(fields: [productId], references: [id])
+  stockTransactions StockTransaction[]
 
   @@unique([warehouseId, productId])
+  @@index([warehouseId])
+  @@index([productId])
 }
 
 model StockTransaction {
   id              String   @id @default(uuid())
+  inventoryId     String
   productId       String
   warehouseId     String
-  type            String   // IN, OUT, ADJUSTMENT, TRANSFER
+  transactionType String
   quantity        Int
+  quantityBefore  Int
+  quantityAfter   Int
   referenceType   String?  // TRANSFER, ORDER, RETURN
   referenceId     String?
+  reason          String
+  notes           String?
+  performedBy     String
   createdAt       DateTime @default(now())
 
+  inventory       Inventory @relation(fields: [inventoryId], references: [id])
   product         Product  @relation(fields: [productId], references: [id])
+  warehouse       Warehouse @relation(fields: [warehouseId], references: [id])
+  performer       User @relation(fields: [performedBy], references: [id])
+
+  @@index([inventoryId, createdAt])
+  @@index([productId, warehouseId])
+  @@index([transactionType])
+  @@index([createdAt])
 }
 
 model StockTransfer {
@@ -242,10 +265,14 @@ model InventoryAdjustment {
   productId   String
   quantity    Int
   reason      String
+  notes       String?
+  type        String
+  performedBy String?
   createdAt   DateTime @default(now())
 
   warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
   product     Product   @relation(fields: [productId], references: [id])
+  performer   User?     @relation(fields: [performedBy], references: [id])
 }
 
 model Supplier {
