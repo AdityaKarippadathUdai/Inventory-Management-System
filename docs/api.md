@@ -45,6 +45,20 @@ Error responses:
 ## Swagger / OpenAPI
 Full interactive documentation is available at `/api` when the backend is running in development mode.
 
-## Future Authentication Strategy
-- Endpoints will be protected via Authorization header: `Bearer <token>`
-- NestJS guards will evaluate the token and attach the `User` object to the request context.
+## Phase 2 Authentication
+Authentication uses a short-lived JWT in `Authorization: Bearer <token>`. Refresh tokens are random opaque values stored only as SHA-256 hashes and delivered in an HTTP-only, same-site cookie.
+
+| Method | Endpoint | Access |
+|---|---|---|
+| POST | `/api/v1/auth/login` | Public |
+| POST | `/api/v1/auth/refresh` | Refresh cookie |
+| POST | `/api/v1/auth/logout` | Refresh cookie |
+| GET | `/api/v1/auth/me` | Authenticated |
+| POST | `/api/v1/auth/change-password` | Authenticated |
+| POST | `/api/v1/auth/forgot-password` | Public |
+| POST | `/api/v1/auth/reset-password` | Reset token |
+| GET/PATCH | `/api/v1/users/me` | Authenticated |
+| GET/POST/PATCH/DELETE | `/api/v1/users` | `USER_VIEW` / management permissions |
+| PATCH | `/api/v1/users/:id/status` | `USER_UPDATE` |
+
+The user-management endpoints enforce permissions in NestJS guards. The initial roles and permissions are created by `npx prisma db seed`; set `SEED_ADMIN_PASSWORD` first. Reset requests deliberately return the same message for existing and unknown email addresses and do not expose reset tokens.
