@@ -1,14 +1,22 @@
 import { Warehouse, Package, ArrowRightLeft, AlertTriangle } from "lucide-react";
 import { KPICard } from "@/components/ui/kpi-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockKpis, mockRecentActivity, mockStockMovement, mockWarehouseDistribution } from "@/data/mock/dashboard";
+import { mockRecentActivity, mockStockMovement, mockWarehouseDistribution } from "@/data/mock/dashboard";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/api/client";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary-foreground))', 'hsl(var(--muted-foreground))', 'hsl(var(--accent-foreground))'];
 
 export function Dashboard() {
+  const summary = useQuery({ queryKey: ["inventory-summary"], queryFn: () => apiClient.get("/inventory/summary") });
+  const warehouses = useQuery({ queryKey: ["dashboard-warehouses"], queryFn: () => apiClient.get("/warehouses?limit=1") });
+  const products = useQuery({ queryKey: ["dashboard-products"], queryFn: () => apiClient.get("/products?limit=1") });
+  const inventory = summary.data as unknown as { data?: { totalUnits: number; lowStock: number; outOfStock: number } } | undefined;
+  const warehouseCount = (warehouses.data as unknown as { meta?: { total?: number } } | undefined)?.meta?.total ?? 0;
+  const productCount = (products.data as unknown as { meta?: { total?: number } } | undefined)?.meta?.total ?? 0;
   return (
     <div className="space-y-6">
       <div>
@@ -19,24 +27,24 @@ export function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KPICard 
           title="Total Warehouses" 
-          value={mockKpis.totalWarehouses} 
+          value={warehouseCount} 
           icon={Warehouse} 
         />
         <KPICard 
           title="Total Products" 
-          value={mockKpis.totalProducts.toLocaleString()} 
+          value={productCount.toLocaleString()} 
           icon={Package} 
           trend={{ value: 2.5, isPositive: true }}
         />
         <KPICard 
           title="Total Inventory" 
-          value={mockKpis.totalInventory.toLocaleString()} 
+          value={(inventory?.data?.totalUnits ?? 0).toLocaleString()} 
           icon={ArrowRightLeft} 
           trend={{ value: 5.2, isPositive: true }}
         />
         <KPICard 
           title="Low Stock Alerts" 
-          value={mockKpis.lowStockItems} 
+          value={inventory?.data?.lowStock ?? 0} 
           icon={AlertTriangle} 
           className="border-destructive/50 dark:border-destructive/30"
           trend={{ value: 12, isPositive: false }}
