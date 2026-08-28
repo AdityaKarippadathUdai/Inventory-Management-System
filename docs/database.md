@@ -4,7 +4,9 @@
 The database uses PostgreSQL managed via Prisma ORM. It is designed for strong consistency and ACID transactional support, crucial for inventory and stock management.
 
 ## Entities and Relationships
-- **User, Role, Permission**: Handles system access and RBAC. A User belongs to a Role, and a Role has many Permissions.
+- **User, Role, Permission**: Handles system access and RBAC. A User belongs to a Role, and `RolePermission` explicitly joins roles to permissions.
+- **RefreshToken**: Stores only a hash of each revocable session token.
+- **PasswordResetToken**: Stores a hashed, expiring, single-use reset token.
 - **Warehouse**: Represents a physical or logical storage location.
 - **Product & Category**: Products belong to Categories.
 - **Inventory**: The central stock record linking `Warehouse` and `Product`.
@@ -16,6 +18,8 @@ The database uses PostgreSQL managed via Prisma ORM. It is designed for strong c
 - **Return**: Processing returned items.
 - **AuditLog**: Tracking critical system actions.
 - **Notification**: User alerts for low stock, approvals, etc.
+
+Phase 2 user passwords are stored only in `User.passwordHash` using Argon2. `User.isActive` provides soft deactivation, and user and token relations are indexed for authorization and cleanup queries.
 
 ## Inventory Design & Constraints
 The `Inventory` table maintains the current stock level. It enforces a unique constraint on:
