@@ -31,3 +31,8 @@ Thumbs.db
 *.sqlite
 *.sqlite-journal
 *.tsbuildinfo
+backend/.agents/skills/prisma-composer/SKILL.md
+backend/.claude/skills/prisma-composer/SKILL.md
+.gitignore
+backend/.cursor/skills/prisma-composer/SKILL.md
+backend/.devin/skills/prisma-composer/SKILL.md
