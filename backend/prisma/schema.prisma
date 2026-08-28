@@ -23,6 +23,7 @@ model User {
   auditLogs     AuditLog[]
   refreshTokens RefreshToken[]
   resetTokens   PasswordResetToken[]
+  managedWarehouses Warehouse[] @relation("WarehouseManager")
 
   @@index([roleId])
   @@index([isActive])
@@ -85,10 +86,21 @@ model PasswordResetToken {
 
 model Warehouse {
   id          String   @id @default(uuid())
-  name        String
   code        String   @unique
+  name        String
+  description String?
   location    String?
+  address     String?
+  city        String?
+  state       String?
+  country     String?
+  postalCode  String?
+  phone       String?
+  email       String?
+  managerId   String?
+  manager     User?    @relation("WarehouseManager", fields: [managerId], references: [id], onDelete: SetNull)
   capacity    Int?
+  status      String   @default("ACTIVE")
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -97,25 +109,50 @@ model Warehouse {
   transfersOut           StockTransfer[]       @relation("SourceWarehouse")
   transfersIn            StockTransfer[]       @relation("DestinationWarehouse")
   inventoryAdjustments   InventoryAdjustment[]
+
+  @@index([name])
+  @@index([status])
+  @@index([managerId])
 }
 
 model Category {
   id          String    @id @default(uuid())
-  name        String    @unique
+  name        String
   description String?
+  parentId    String?
+  parent      Category? @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryTree")
+  status      String    @default("ACTIVE")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   products    Product[]
+
+  @@unique([name, parentId])
+  @@index([name])
+  @@index([parentId])
+  @@index([status])
 }
 
 model Product {
   id          String   @id @default(uuid())
   sku         String   @unique
+  barcode     String?  @unique
   name        String
   description String?
-  price       Decimal  @db.Decimal(10, 2)
+  brand       String?
+  unit        String   @default("unit")
+  weight      Decimal? @db.Decimal(12, 3)
+  length      Decimal? @db.Decimal(12, 3)
+  width       Decimal? @db.Decimal(12, 3)
+  height      Decimal? @db.Decimal(12, 3)
+  costPrice   Decimal  @default(0) @db.Decimal(12, 2)
+  sellingPrice Decimal @default(0) @db.Decimal(12, 2)
+  price       Decimal  @default(0) @db.Decimal(10, 2)
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id])
+  status      String   @default("ACTIVE")
+  reorderLevel Int     @default(0)
+  maximumStockLevel Int?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -127,6 +164,11 @@ model Product {
   inventoryAdjustments InventoryAdjustment[]
   purchaseOrderItems   PurchaseOrderItem[]
   returns              Return[]
+
+  @@index([name])
+  @@index([categoryId])
+  @@index([status])
+  @@index([brand])
 }
 
 model Inventory {
@@ -208,13 +250,26 @@ model InventoryAdjustment {
 
 model Supplier {
   id             String          @id @default(uuid())
+  code           String          @unique
   name           String
+  contactPerson  String?
   email          String?
   phone          String?
+  website        String?
   address        String?
+  city           String?
+  state          String?
+  country        String?
+  postalCode     String?
+  paymentTerms   String?
+  status         String          @default("ACTIVE")
+  notes          String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   purchaseOrders PurchaseOrder[]
+
+  @@index([name])
+  @@index([status])
 }
 
 model PurchaseOrder {
