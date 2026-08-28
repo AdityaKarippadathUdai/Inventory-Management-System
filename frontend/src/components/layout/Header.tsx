@@ -8,6 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/auth/AuthContext";
+import { Link } from "react-router-dom";
 
 interface HeaderProps {
   setMobileOpen: (open: boolean) => void;
@@ -15,6 +17,7 @@ interface HeaderProps {
 
 export function Header({ setMobileOpen }: HeaderProps) {
   const { setTheme } = useTheme();
+  const { logout } = useAuth();
 
   return (
     <header className="h-16 border-b bg-card px-4 flex items-center justify-between sticky top-0 z-30">
@@ -61,9 +64,9 @@ export function Header({ setMobileOpen }: HeaderProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">Logout</DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={() => void logout()}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
