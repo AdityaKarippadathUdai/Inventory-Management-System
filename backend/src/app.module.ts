@@ -8,9 +8,10 @@ import { UsersService } from './users.service.js';
 import { PrismaService } from './prisma.service.js';
 import { MasterDataModule } from './master-data.module.js';
 import { InventoryModule } from './inventory.module.js';
+import { TransfersModule } from './transfers.module.js';
 
 @Module({
-  imports: [HealthModule, AuthModule, MasterDataModule, InventoryModule],
+  imports: [HealthModule, AuthModule, MasterDataModule, InventoryModule, TransfersModule],
   controllers: [AppController, UsersController],
   providers: [AppService, UsersService, PrismaService],
 })
