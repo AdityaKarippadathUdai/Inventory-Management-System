@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  firstName String
+  lastName  String
+  password  String
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notifications Notification[]
+  auditLogs     AuditLog[]
+}
+
+model Role {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  users       User[]
+  permissions Permission[]
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  roles       Role[]
+}
+
+model Warehouse {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  location    String?
+  capacity    Int?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inventories            Inventory[]
+  transfersOut           StockTransfer[]       @relation("SourceWarehouse")
+  transfersIn            StockTransfer[]       @relation("DestinationWarehouse")
+  inventoryAdjustments   InventoryAdjustment[]
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  sku         String   @unique
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inventories          Inventory[]
+  stockTransactions    StockTransaction[]
+  transferItems        StockTransferItem[]
+  reservations         StockReservation[]
+  inventoryAdjustments InventoryAdjustment[]
+  purchaseOrderItems   PurchaseOrderItem[]
+  returns              Return[]
+}
+
+model Inventory {
+  id          String    @id @default(uuid())
+  warehouseId String
+  productId   String
+  quantity    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  product     Product   @relation(fields: [productId], references: [id])
+
+  @@unique([warehouseId, productId])
+}
+
+model StockTransaction {
+  id              String   @id @default(uuid())
+  productId       String
+  warehouseId     String
+  type            String   // IN, OUT, ADJUSTMENT, TRANSFER
+  quantity        Int
+  referenceType   String?  // TRANSFER, ORDER, RETURN
+  referenceId     String?
+  createdAt       DateTime @default(now())
+
+  product         Product  @relation(fields: [productId], references: [id])
+}
+
+model StockTransfer {
+  id                     String              @id @default(uuid())
+  sourceWarehouseId      String
+  destinationWarehouseId String
+  status                 String              // PENDING, IN_TRANSIT, COMPLETED, CANCELLED
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+
+  sourceWarehouse        Warehouse           @relation("SourceWarehouse", fields: [sourceWarehouseId], references: [id])
+  destinationWarehouse   Warehouse           @relation("DestinationWarehouse", fields: [destinationWarehouseId], references: [id])
+  items                  StockTransferItem[]
+}
+
+model StockTransferItem {
+  id              String        @id @default(uuid())
+  transferId      String
+  productId       String
+  quantity        Int
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  transfer        StockTransfer @relation(fields: [transferId], references: [id])
+  product         Product       @relation(fields: [productId], references: [id])
+}
+
+model StockReservation {
+  id          String   @id @default(uuid())
+  productId   String
+  warehouseId String
+  quantity    Int
+  status      String   // ACTIVE, FULFILLED, CANCELLED
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  product     Product  @relation(fields: [productId], references: [id])
+}
+
+model InventoryAdjustment {
+  id          String   @id @default(uuid())
+  warehouseId String
+  productId   String
+  quantity    Int
+  reason      String
+  createdAt   DateTime @default(now())
+
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  product     Product   @relation(fields: [productId], references: [id])
+}
+
+model Supplier {
+  id             String          @id @default(uuid())
+  name           String
+  email          String?
+  phone          String?
+  address        String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  purchaseOrders PurchaseOrder[]
+}
+
+model PurchaseOrder {
+  id         String              @id @default(uuid())
+  supplierId String
+  status     String              // DRAFT, ORDERED, RECEIVED, CANCELLED
+  total      Decimal             @db.Decimal(10, 2)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  supplier   Supplier            @relation(fields: [supplierId], references: [id])
+  items      PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(uuid())
+  purchaseOrderId String
+  productId       String
+  quantity        Int
+  unitPrice       Decimal       @db.Decimal(10, 2)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  product         Product       @relation(fields: [productId], references: [id])
+}
+
+model Return {
+  id          String   @id @default(uuid())
+  productId   String
+  quantity    Int
+  reason      String
+  status      String   // PENDING, APPROVED, REJECTED, PROCESSED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  product     Product  @relation(fields: [productId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
