@@ -65,3 +65,6 @@ cp .env.example .env
 npm run dev
 ```
 The frontend will run on `http://localhost:5173`.
+
+### Phase 4 Inventory
+Inventory is tracked per product and warehouse. Use the Inventory screen to review on-hand, reserved, available, low-stock, and out-of-stock positions, receive stock, and perform audited adjustments. Every quantity mutation is transactional and appends immutable stock history. Transfers, reservations, and reconciliation remain future phases.
