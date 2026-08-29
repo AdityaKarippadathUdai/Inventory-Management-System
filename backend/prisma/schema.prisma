@@ -31,6 +31,11 @@ model User {
   receivedTransfers StockTransfer[] @relation("TransferReceiver")
   stockReservations StockReservation[]
   reservations Reservation[] @relation("ReservationRequester")
+  stockCounts  StockCount[] @relation("StockCountCreator")
+  stockCountReviews StockCount[] @relation("StockCountReviewer")
+  stockCountApprovals StockCount[] @relation("StockCountApprover")
+  reconciliations InventoryReconciliation[] @relation("ReconciliationApprover")
+  reconciliationExecutions InventoryReconciliation[] @relation("ReconciliationExecutor")
 
   @@index([roleId])
   @@index([isActive])
@@ -118,6 +123,8 @@ model Warehouse {
   reservations           Reservation[]
   inventoryAdjustments   InventoryAdjustment[]
   stockTransactions      StockTransaction[]
+  stockCounts            StockCount[]
+  reconciliations        InventoryReconciliation[]
 
   @@index([name])
   @@index([status])
@@ -174,6 +181,8 @@ model Product {
   inventoryAdjustments InventoryAdjustment[]
   purchaseOrderItems   PurchaseOrderItem[]
   returns              Return[]
+  stockCountItems      StockCountItem[]
+  reconciliationItems  InventoryReconciliationItem[]
 
   @@index([name])
   @@index([categoryId])
@@ -439,4 +448,108 @@ model Notification {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model StockCount {
+  id                String              @id @default(uuid())
+  countNumber       String              @unique
+  warehouseId       String
+  countType         String              // FULL, PARTIAL, CYCLE, SPOT_CHECK
+  status            String              @default("DRAFT")
+  startedAt         DateTime?
+  submittedAt       DateTime?
+  reviewedAt        DateTime?
+  approvedAt        DateTime?
+  completedAt       DateTime?
+  createdById       String
+  reviewedById      String?
+  approvedById      String?
+  rejectionReason   String?
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  warehouse         Warehouse           @relation(fields: [warehouseId], references: [id])
+  createdBy         User                @relation("StockCountCreator", fields: [createdById], references: [id])
+  reviewedBy        User?               @relation("StockCountReviewer", fields: [reviewedById], references: [id])
+  approvedBy        User?               @relation("StockCountApprover", fields: [approvedById], references: [id])
+  items             StockCountItem[]
+  reconciliation    InventoryReconciliation?
+
+  @@index([countNumber])
+  @@index([warehouseId, status])
+  @@index([status])
+  @@index([countType])
+  @@index([createdAt])
+  @@index([createdById])
+}
+
+model StockCountItem {
+  id                String              @id @default(uuid())
+  stockCountId      String
+  productId         String
+  systemQuantity    Int
+  countedQuantity   Int?
+  varianceQuantity  Int                 @default(0)
+  variancePercentage Float              @default(0)
+  severity          String              @default("NONE") // NONE, LOW, MEDIUM, HIGH, CRITICAL
+  notes             String?
+  countedAt         DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  stockCount        StockCount          @relation(fields: [stockCountId], references: [id], onDelete: Cascade)
+  product           Product             @relation(fields: [productId], references: [id])
+
+  @@unique([stockCountId, productId])
+  @@index([stockCountId])
+  @@index([productId])
+  @@index([severity])
+}
+
+model InventoryReconciliation {
+  id                  String                      @id @default(uuid())
+  reconciliationNumber String                    @unique
+  stockCountId        String                    @unique
+  warehouseId         String
+  status              String                    @default("PENDING") // PENDING, APPROVED, EXECUTED, FAILED, CANCELLED
+  approvedById        String?
+  executedById        String?
+  approvedAt          DateTime?
+  executedAt          DateTime?
+  totalIncrease       Int                       @default(0)
+  totalDecrease       Int                       @default(0)
+  totalVariance       Int                       @default(0)
+  notes               String?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  stockCount          StockCount                @relation(fields: [stockCountId], references: [id])
+  warehouse           Warehouse                 @relation(fields: [warehouseId], references: [id])
+  approvedBy          User?                     @relation("ReconciliationApprover", fields: [approvedById], references: [id])
+  executedBy          User?                     @relation("ReconciliationExecutor", fields: [executedById], references: [id])
+  items               InventoryReconciliationItem[]
+
+  @@index([reconciliationNumber])
+  @@index([stockCountId])
+  @@index([warehouseId])
+  @@index([status])
+}
+
+model InventoryReconciliationItem {
+  id                    String                      @id @default(uuid())
+  reconciliationId      String
+  productId             String
+  systemQuantity        Int
+  countedQuantity       Int
+  adjustmentQuantity    Int
+  adjustmentType        String                      // INCREASE, DECREASE, NO_CHANGE
+  reason                String
+  createdAt             DateTime                    @default(now())
+
+  reconciliation        InventoryReconciliation     @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+  product               Product                     @relation(fields: [productId], references: [id])
+
+  @@index([reconciliationId])
+  @@index([productId])
 }
