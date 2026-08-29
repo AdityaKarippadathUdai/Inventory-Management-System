@@ -1,132 +1,139 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+/* ─── Google Fonts ─────────────────────────────────────────── */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+/* ─── Tailwind v4: CSS-first theme tokens ───────────────────── */
+@theme {
+  /* Font */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+  /* Radius */
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
 
-    /* Enterprise Indigo */
-    --primary: 235 86% 65%;
-    --primary-foreground: 210 40% 98%;
+  /* Animations */
+  --animate-fade-in-up: fade-in-up 0.5s ease-out forwards;
+  --animate-fade-in:    fade-in    0.4s ease-out forwards;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+  /* Brand colours – light mode */
+  --color-background:          oklch(98% 0 0);
+  --color-foreground:          oklch(15% 0.02 255);
+  --color-card:                oklch(100% 0 0);
+  --color-card-foreground:     oklch(15% 0.02 255);
+  --color-popover:             oklch(100% 0 0);
+  --color-popover-foreground:  oklch(15% 0.02 255);
+  --color-primary:             oklch(58% 0.22 270);
+  --color-primary-foreground:  oklch(98% 0 0);
+  --color-secondary:           oklch(94% 0.01 255);
+  --color-secondary-foreground:oklch(20% 0.02 255);
+  --color-muted:               oklch(94% 0.01 255);
+  --color-muted-foreground:    oklch(55% 0.02 255);
+  --color-accent:              oklch(94% 0.01 255);
+  --color-accent-foreground:   oklch(20% 0.02 255);
+  --color-destructive:         oklch(58% 0.22 25);
+  --color-destructive-foreground: oklch(98% 0 0);
+  --color-border:              oklch(91% 0.01 255);
+  --color-input:               oklch(91% 0.01 255);
+  --color-ring:                oklch(58% 0.22 270);
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 235 86% 65%;
-
-    --radius: 0.75rem;
+  /* Keyframes */
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-
-  .dark {
-    /* Deeper premium background */
-    --background: 230 25% 7%;
-    --foreground: 210 40% 98%;
-
-    --card: 230 25% 10%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 230 25% 9%;
-    --popover-foreground: 210 40% 98%;
-
-    /* Vibrant Indigo */
-    --primary: 245 85% 65%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 230 20% 16%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 230 20% 16%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 245 85% 65%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 50.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 230 20% 16%;
-    --input: 230 20% 16%;
-    --ring: 245 85% 65%;
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
 }
 
+/* ─── Dark mode token overrides ─────────────────────────────── */
+.dark {
+  --color-background:          oklch(11% 0.02 265);
+  --color-foreground:          oklch(96% 0.005 265);
+  --color-card:                oklch(14% 0.02 265);
+  --color-card-foreground:     oklch(96% 0.005 265);
+  --color-popover:             oklch(13% 0.02 265);
+  --color-popover-foreground:  oklch(96% 0.005 265);
+  --color-primary:             oklch(62% 0.22 270);
+  --color-primary-foreground:  oklch(98% 0 0);
+  --color-secondary:           oklch(18% 0.02 265);
+  --color-secondary-foreground:oklch(96% 0.005 265);
+  --color-muted:               oklch(18% 0.02 265);
+  --color-muted-foreground:    oklch(60% 0.01 265);
+  --color-accent:              oklch(62% 0.22 270);
+  --color-accent-foreground:   oklch(98% 0 0);
+  --color-destructive:         oklch(55% 0.22 25);
+  --color-destructive-foreground: oklch(98% 0 0);
+  --color-border:              oklch(22% 0.02 265);
+  --color-input:               oklch(22% 0.02 265);
+  --color-ring:                oklch(62% 0.22 270);
+}
+
+/* ─── Base resets ───────────────────────────────────────────── */
 @layer base {
-  * {
-    @apply border-border;
+  *, *::before, *::after {
+    border-color: var(--color-border);
+    box-sizing: border-box;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-background text-foreground antialiased font-sans transition-colors duration-300;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s, color 0.3s;
   }
+
+  /* Global custom scrollbar */
+  ::-webkit-scrollbar        { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track  { background: transparent; }
+  ::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.08); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
 }
 
+/* ─── Utility classes ───────────────────────────────────────── */
 @layer utilities {
+  /* Thin sidebar scrollbar */
+  .custom-scrollbar::-webkit-scrollbar       { width: 3px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 999px; }
+
+  /* Glassmorphism panel – used on auth pages */
   .glass-panel {
-    @apply bg-background/60 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)];
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.03),
+      0 32px 64px -16px rgba(0,0,0,0.5),
+      0 8px 24px -8px rgba(0,0,0,0.3);
   }
-  .glass-card {
-    @apply bg-card/70 backdrop-blur-lg border border-white/5 shadow-lg transition-all hover:bg-card/80;
-  }
-  
+
+  /* Gradient text */
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400;
+    background: linear-gradient(135deg, var(--color-primary) 0%, oklch(68% 0.18 310) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
   }
-  
-  /* Mesh gradient background for auth pages */
+
+  /* Dark mesh background for auth pages */
   .bg-mesh-dark {
-    background-color: #0d1117;
-    background-image: 
-      radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-      radial-gradient(at 50% 0%, hsla(225,39%,30%,0.2) 0, transparent 50%), 
-      radial-gradient(at 100% 0%, hsla(339,49%,30%,0.2) 0, transparent 50%);
-  }
-
-  /* Custom scrollbar */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 999px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
-  }
-
-  /* Global scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background-color: oklch(9% 0.02 265);
+    background-image:
+      radial-gradient(ellipse 80% 60% at 20% -10%, oklch(30% 0.12 270 / 0.3) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 110%, oklch(28% 0.14 310 / 0.25) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 50% 50%, oklch(12% 0.03 265) 0%, transparent 80%);
   }
 }

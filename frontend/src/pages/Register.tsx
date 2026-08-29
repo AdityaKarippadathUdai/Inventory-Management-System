@@ -3,9 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, UserPlus, Package, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Eye, EyeOff, Warehouse, CheckCircle2, XCircle } from "lucide-react";
 import { apiClient } from "@/api/client";
 
 const schema = z
@@ -15,18 +13,35 @@ const schema = z
     password: z
       .string()
       .min(10, "Password must be at least 10 characters")
-      .regex(/[a-z]/, "Password must contain lowercase letter")
-      .regex(/[A-Z]/, "Password must contain uppercase letter")
-      .regex(/\d/, "Password must contain number")
-      .regex(/[^A-Za-z\d]/, "Password must contain special character"),
+      .regex(/[a-z]/, "Must contain lowercase letter")
+      .regex(/[A-Z]/, "Must contain uppercase letter")
+      .regex(/\d/, "Must contain number")
+      .regex(/[^A-Za-z\d]/, "Must contain special character"),
     confirmPassword: z.string(),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine((d) => d.password === d.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
   });
 
 type FormValues = z.infer<typeof schema>;
+
+const reqs = [
+  { label: "At least 10 characters", test: (v: string) => v.length >= 10 },
+  { label: "Uppercase letter (A–Z)", test: (v: string) => /[A-Z]/.test(v) },
+  { label: "Lowercase letter (a–z)", test: (v: string) => /[a-z]/.test(v) },
+  { label: "Number (0–9)", test: (v: string) => /\d/.test(v) },
+  { label: "Special character (!@#$%…)", test: (v: string) => /[^A-Za-z\d]/.test(v) },
+];
+
+const inputStyle = (hasError?: boolean): React.CSSProperties => ({
+  width: "100%", height: "44px", padding: "0 0.875rem",
+  background: "rgba(255,255,255,0.05)",
+  border: hasError ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(255,255,255,0.1)",
+  borderRadius: "10px", color: "white", fontSize: "0.9rem",
+  outline: "none", transition: "border-color 0.2s, box-shadow 0.2s",
+  boxSizing: "border-box" as const,
+});
 
 export function Register() {
   const navigate = useNavigate();
@@ -34,192 +49,169 @@ export function Register() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pwValue, setPwValue] = useState("");
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-  });
+  const { register, handleSubmit, formState: { errors }, watch } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  const watchedPw = watch("password", "");
 
   async function submit(values: FormValues) {
     setError("");
     setIsSubmitting(true);
-
     try {
-      await apiClient.post("/auth/register", {
-        name: values.name,
-        email: values.email,
-        password: values.password,
-      });
-
-      navigate("/login", { replace: true, state: { message: "Registration successful! Please sign in." } });
+      await apiClient.post("/auth/register", { name: values.name, email: values.email, password: values.password });
+      navigate("/login", { replace: true });
     } catch (err: any) {
-      const message = err.response?.data?.message || "Registration failed. Please try again.";
-      setError(message);
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
+  function onFocus(e: React.FocusEvent<HTMLInputElement>) {
+    e.target.style.borderColor = "rgba(99,102,241,0.6)";
+    e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.12)";
+  }
+  function onBlur(e: React.FocusEvent<HTMLInputElement>, hasErr?: boolean) {
+    e.target.style.borderColor = hasErr ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.1)";
+    e.target.style.boxShadow = "none";
+  }
+
   return (
-    <main className="min-h-screen bg-mesh-dark text-white grid lg:grid-cols-2">
-      <section className="hidden lg:flex flex-col justify-between p-16 relative overflow-hidden">
-        <div className="z-10 flex items-center gap-3 text-2xl font-bold tracking-tight">
-          <Package className="text-primary" /> OptiStock
+    <div style={{
+      minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+      background: "radial-gradient(ellipse 80% 60% at 20% -10%, rgba(99,102,241,0.2) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 110%, rgba(168,85,247,0.15) 0%, transparent 60%), #0a0a0f",
+      padding: "2rem",
+    }}>
+      <div style={{
+        width: "100%", maxWidth: "460px",
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        border: "1px solid rgba(255,255,255,0.09)",
+        borderRadius: "20px",
+        padding: "2.5rem",
+        boxShadow: "0 32px 64px rgba(0,0,0,0.5)",
+      }}>
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "2rem" }}>
+          <div style={{
+            width: "36px", height: "36px", borderRadius: "9px",
+            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Warehouse size={18} color="white" />
+          </div>
+          <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "white" }}>OptiStock</span>
         </div>
-        <div className="z-10 animate-fade-in-up">
-          <p className="mb-6 text-sm uppercase tracking-[0.3em] font-semibold text-primary">
-            Join the network
-          </p>
-          <h1 className="max-w-xl text-6xl font-bold leading-[1.1] tracking-tight">
-            Get started with <span className="text-gradient">warehouse management</span> today.
-          </h1>
-          <p className="mt-8 max-w-lg text-lg text-gray-400 font-light leading-relaxed">
-            Create your account and join teams managing inventory across multiple warehouses.
-          </p>
-        </div>
-        <p className="z-10 text-sm text-gray-500 font-medium">Multi-Warehouse Management System &copy; {new Date().getFullYear()}</p>
-        {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent pointer-events-none" />
-      </section>
 
-      <section className="flex items-center justify-center p-6 relative">
-        <div className="absolute inset-0 bg-background/50 backdrop-blur-3xl lg:hidden pointer-events-none" />
-        <div className="w-full max-w-lg glass-panel p-10 rounded-2xl animate-fade-in z-10 relative">
-          <div className="mb-10 lg:hidden flex items-center gap-3 text-2xl font-bold tracking-tight text-white">
-            <Package className="text-primary" /> OptiStock
+        <h2 style={{ fontSize: "1.625rem", fontWeight: 700, color: "white", letterSpacing: "-0.025em", marginBottom: "0.375rem" }}>
+          Create your account
+        </h2>
+        <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.4)", marginBottom: "2rem" }}>
+          Join OptiStock and manage your warehouses with ease.
+        </p>
+
+        {error && (
+          <div style={{
+            padding: "0.875rem 1rem", background: "rgba(239,68,68,0.12)",
+            border: "1px solid rgba(239,68,68,0.3)", borderRadius: "10px",
+            marginBottom: "1.5rem", fontSize: "0.875rem", color: "#fca5a5",
+          }}>{error}</div>
+        )}
+
+        <form onSubmit={handleSubmit(submit)} style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
+          {/* Name */}
+          <div>
+            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 500, color: "rgba(255,255,255,0.55)", marginBottom: "0.4rem" }}>Full Name</label>
+            <input type="text" autoComplete="name" placeholder="John Doe" {...register("name")}
+              style={inputStyle(!!errors.name)} onFocus={onFocus} onBlur={(e) => onBlur(e, !!errors.name)} />
+            {errors.name && <p style={{ marginTop: "0.3rem", fontSize: "0.73rem", color: "#f87171" }}>{errors.name.message}</p>}
           </div>
 
-          <h2 className="text-3xl font-bold tracking-tight text-white">Create Account</h2>
-          <p className="mt-2 text-sm text-gray-400">
-            Sign up to get started with OptiStock.
-          </p>
+          {/* Email */}
+          <div>
+            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 500, color: "rgba(255,255,255,0.55)", marginBottom: "0.4rem" }}>Email</label>
+            <input type="email" autoComplete="email" placeholder="you@company.com" {...register("email")}
+              style={inputStyle(!!errors.email)} onFocus={onFocus} onBlur={(e) => onBlur(e, !!errors.email)} />
+            {errors.email && <p style={{ marginTop: "0.3rem", fontSize: "0.73rem", color: "#f87171" }}>{errors.email.message}</p>}
+          </div>
 
-          {error && (
-            <div
-              role="alert"
-              className="mt-6 rounded-lg border border-destructive/50 bg-destructive/20 p-4 text-sm text-red-200 animate-fade-in"
-            >
-              {error}
+          {/* Password */}
+          <div>
+            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 500, color: "rgba(255,255,255,0.55)", marginBottom: "0.4rem" }}>Password</label>
+            <div style={{ position: "relative" }}>
+              <input type={showPassword ? "text" : "password"} autoComplete="new-password"
+                placeholder="Create a strong password"
+                {...register("password", { onChange: (e) => setPwValue(e.target.value) })}
+                style={{ ...inputStyle(!!errors.password), paddingRight: "2.75rem" }}
+                onFocus={onFocus} onBlur={(e) => onBlur(e, !!errors.password)} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} style={{
+                position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)",
+                background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)",
+                display: "flex", alignItems: "center",
+              }}>
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
-          )}
-
-          <form onSubmit={handleSubmit(submit)} className="mt-8 space-y-5">
-            <label className="block text-sm font-medium text-gray-300">
-              Full Name
-              <Input
-                className="mt-2 bg-black/40 border-gray-700/50 focus-visible:ring-primary text-white h-11"
-                type="text"
-                autoComplete="name"
-                {...register("name")}
-                placeholder="John Doe"
-              />
-              {errors.name && (
-                <span className="mt-2 block text-xs text-destructive">
-                  {errors.name.message}
-                </span>
-              )}
-            </label>
-
-            <label className="block text-sm font-medium text-gray-300">
-              Email
-              <Input
-                className="mt-2 bg-black/40 border-gray-700/50 focus-visible:ring-primary text-white h-11"
-                type="email"
-                autoComplete="email"
-                {...register("email")}
-                placeholder="you@example.com"
-              />
-              {errors.email && (
-                <span className="mt-2 block text-xs text-destructive">
-                  {errors.email.message}
-                </span>
-              )}
-            </label>
-
-            <label className="block text-sm font-medium text-gray-300">
-              Password
-              <div className="relative mt-2">
-                <Input
-                  className="pr-10 bg-black/40 border-gray-700/50 focus-visible:ring-primary text-white h-11"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  {...register("password")}
-                  placeholder="Min 10 chars, upper, lower, number, special"
-                />
-                <button
-                  type="button"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute right-3 top-3 text-gray-400 hover:text-white transition-colors"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+            {/* Password strength checklist */}
+            {(watchedPw || pwValue) && (
+              <div style={{
+                marginTop: "0.75rem", padding: "0.875rem",
+                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: "8px",
+              }}>
+                {reqs.map((r) => {
+                  const passed = r.test(watchedPw || pwValue);
+                  return (
+                    <div key={r.label} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem" }}>
+                      {passed
+                        ? <CheckCircle2 size={13} color="#34d399" />
+                        : <XCircle size={13} color="rgba(255,255,255,0.2)" />}
+                      <span style={{ fontSize: "0.73rem", color: passed ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.3)" }}>{r.label}</span>
+                    </div>
+                  );
+                })}
               </div>
-              {errors.password && (
-                <span className="mt-2 block text-xs text-destructive">
-                  {errors.password.message}
-                </span>
-              )}
-            </label>
-
-            <label className="block text-sm font-medium text-gray-300">
-              Confirm Password
-              <div className="relative mt-2">
-                <Input
-                  className="pr-10 bg-black/40 border-gray-700/50 focus-visible:ring-primary text-white h-11"
-                  type={showConfirm ? "text" : "password"}
-                  autoComplete="new-password"
-                  {...register("confirmPassword")}
-                  placeholder="Re-enter password"
-                />
-                <button
-                  type="button"
-                  aria-label={showConfirm ? "Hide password" : "Show password"}
-                  className="absolute right-3 top-3 text-gray-400 hover:text-white transition-colors"
-                  onClick={() => setShowConfirm(!showConfirm)}
-                >
-                  {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <span className="mt-2 block text-xs text-destructive">
-                  {errors.confirmPassword.message}
-                </span>
-              )}
-            </label>
-
-            <Button className="w-full h-11 text-base font-semibold shadow-lg shadow-primary/20 transition-all hover:shadow-primary/40 mt-6" disabled={isSubmitting}>
-              {isSubmitting ? (
-                "Creating account..."
-              ) : (
-                <>
-                  <UserPlus size={18} className="mr-2" /> Create Account
-                </>
-              )}
-            </Button>
-          </form>
-
-          <p className="mt-8 text-center text-sm text-gray-400">
-            Already have an account?{" "}
-            <Link to="/login" className="text-primary hover:text-primary/80 font-semibold transition-colors">
-              Sign in
-            </Link>
-          </p>
-
-          <div className="mt-8 rounded-lg bg-black/30 border border-white/5 p-5 text-xs">
-            <p className="font-semibold text-white flex items-center gap-2">
-              <CheckCircle size={16} className="text-primary" /> Password Requirements
-            </p>
-            <ul className="mt-3 space-y-1.5 text-gray-400 ml-6 list-disc">
-              <li>At least 10 characters</li>
-              <li>Contains uppercase letter (A-Z)</li>
-              <li>Contains lowercase letter (a-z)</li>
-              <li>Contains number (0-9)</li>
-              <li>Contains special character (!@#$%)</li>
-            </ul>
+            )}
           </div>
-        </div>
-      </section>
-    </main>
+
+          {/* Confirm Password */}
+          <div>
+            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 500, color: "rgba(255,255,255,0.55)", marginBottom: "0.4rem" }}>Confirm Password</label>
+            <div style={{ position: "relative" }}>
+              <input type={showConfirm ? "text" : "password"} autoComplete="new-password"
+                placeholder="Re-enter password" {...register("confirmPassword")}
+                style={{ ...inputStyle(!!errors.confirmPassword), paddingRight: "2.75rem" }}
+                onFocus={onFocus} onBlur={(e) => onBlur(e, !!errors.confirmPassword)} />
+              <button type="button" onClick={() => setShowConfirm(!showConfirm)} style={{
+                position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)",
+                background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)",
+                display: "flex", alignItems: "center",
+              }}>
+                {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {errors.confirmPassword && <p style={{ marginTop: "0.3rem", fontSize: "0.73rem", color: "#f87171" }}>{errors.confirmPassword.message}</p>}
+          </div>
+
+          <button type="submit" disabled={isSubmitting} style={{
+            width: "100%", height: "44px", marginTop: "0.5rem",
+            background: isSubmitting ? "rgba(99,102,241,0.5)" : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+            border: "none", borderRadius: "10px", color: "white", fontSize: "0.9rem", fontWeight: 600,
+            cursor: isSubmitting ? "not-allowed" : "pointer",
+            boxShadow: "0 4px 20px rgba(99,102,241,0.35)", transition: "opacity 0.2s, transform 0.15s",
+          }}>
+            {isSubmitting ? "Creating account…" : "Create Account"}
+          </button>
+        </form>
+
+        <p style={{ marginTop: "1.75rem", textAlign: "center", fontSize: "0.85rem", color: "rgba(255,255,255,0.35)" }}>
+          Already have an account?{" "}
+          <Link to="/login" style={{ color: "#818cf8", textDecoration: "none", fontWeight: 600 }}>Sign in</Link>
+        </p>
+      </div>
+    </div>
   );
 }
 
