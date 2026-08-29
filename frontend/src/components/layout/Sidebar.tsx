@@ -91,6 +91,19 @@ export function Sidebar({ isMobileOpen, setMobileOpen }: SidebarProps) {
             )
           })}
         </div>
+
+        {/* Bottom section with user indicator */}
+        <div className="border-t border-white/5 p-4">
+          <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group">
+            <div className="h-8 w-8 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-semibold text-primary">OP</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-gray-300 truncate">OptiStock</p>
+              <p className="text-xs text-gray-600 truncate">Enterprise</p>
+            </div>
+          </div>
+        </div>
       </aside>
     </>
   );
