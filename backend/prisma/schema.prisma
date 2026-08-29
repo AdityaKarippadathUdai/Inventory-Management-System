@@ -26,6 +26,11 @@ model User {
   managedWarehouses Warehouse[] @relation("WarehouseManager")
   stockTransactions StockTransaction[]
   inventoryAdjustments InventoryAdjustment[]
+  requestedTransfers StockTransfer[] @relation("TransferRequester")
+  approvedTransfers StockTransfer[] @relation("TransferApprover")
+  receivedTransfers StockTransfer[] @relation("TransferReceiver")
+  stockReservations StockReservation[]
+  reservations Reservation[] @relation("ReservationRequester")
 
   @@index([roleId])
   @@index([isActive])
@@ -108,8 +113,9 @@ model Warehouse {
   updatedAt   DateTime @updatedAt
 
   inventories            Inventory[]
-  transfersOut           StockTransfer[]       @relation("SourceWarehouse")
-  transfersIn            StockTransfer[]       @relation("DestinationWarehouse")
+  transfersOut           StockTransfer[]       @relation("SourceTransfers")
+  transfersIn            StockTransfer[]       @relation("DestinationTransfers")
+  reservations           Reservation[]
   inventoryAdjustments   InventoryAdjustment[]
   stockTransactions      StockTransaction[]
 
@@ -164,6 +170,7 @@ model Product {
   stockTransactions    StockTransaction[]
   transferItems        StockTransferItem[]
   reservations         StockReservation[]
+  reservationItems      ReservationItem[]
   inventoryAdjustments InventoryAdjustment[]
   purchaseOrderItems   PurchaseOrderItem[]
   returns              Return[]
@@ -223,27 +230,53 @@ model StockTransaction {
 
 model StockTransfer {
   id                     String              @id @default(uuid())
+  transferNumber         String              @unique
   sourceWarehouseId      String
   destinationWarehouseId String
-  status                 String              // PENDING, IN_TRANSIT, COMPLETED, CANCELLED
+  requestedById          String
+  approvedById           String?
+  receivedById           String?
+  status                 String              @default("DRAFT")
+  requestedAt            DateTime            @default(now())
+  approvedAt             DateTime?
+  shippedAt              DateTime?
+  receivedAt             DateTime?
+  rejectionReason        String?
+  cancellationReason     String?
+  notes                  String?
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
 
-  sourceWarehouse        Warehouse           @relation("SourceWarehouse", fields: [sourceWarehouseId], references: [id])
-  destinationWarehouse   Warehouse           @relation("DestinationWarehouse", fields: [destinationWarehouseId], references: [id])
+  sourceWarehouse        Warehouse           @relation("SourceTransfers", fields: [sourceWarehouseId], references: [id])
+  destinationWarehouse   Warehouse           @relation("DestinationTransfers", fields: [destinationWarehouseId], references: [id])
+  requestedBy            User                @relation("TransferRequester", fields: [requestedById], references: [id])
+  approvedBy             User?               @relation("TransferApprover", fields: [approvedById], references: [id])
+  receivedBy             User?               @relation("TransferReceiver", fields: [receivedById], references: [id])
   items                  StockTransferItem[]
+  reservations            StockReservation[]
+
+  @@index([status])
+  @@index([sourceWarehouseId, createdAt])
+  @@index([destinationWarehouseId, createdAt])
+  @@index([requestedById])
+  @@index([createdAt])
 }
 
 model StockTransferItem {
   id              String        @id @default(uuid())
   transferId      String
   productId       String
-  quantity        Int
+  requestedQuantity Int
+  shippedQuantity Int @default(0)
+  receivedQuantity Int @default(0)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   transfer        StockTransfer @relation(fields: [transferId], references: [id])
   product         Product       @relation(fields: [productId], references: [id])
+
+  @@index([transferId])
+  @@index([productId])
 }
 
 model StockReservation {
@@ -251,12 +284,61 @@ model StockReservation {
   productId   String
   warehouseId String
   quantity    Int
+  userId      String?
+  transferId  String?
   status      String   // ACTIVE, FULFILLED, CANCELLED
   expiresAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   product     Product  @relation(fields: [productId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  transfer    StockTransfer? @relation(fields: [transferId], references: [id], onDelete: SetNull)
+
+  @@index([transferId, status])
+}
+
+model Reservation {
+  id                String   @id @default(uuid())
+  reservationNumber String   @unique
+  warehouseId       String
+  reservationType   String
+  status            String   @default("PENDING")
+  referenceType     String?
+  referenceId       String?
+  requestedById     String
+  expiresAt         DateTime?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  warehouse         Warehouse @relation(fields: [warehouseId], references: [id])
+  requestedBy       User @relation("ReservationRequester", fields: [requestedById], references: [id])
+  items             ReservationItem[]
+
+  @@index([warehouseId, status])
+  @@index([reservationType])
+  @@index([referenceType, referenceId])
+  @@index([requestedById])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+model ReservationItem {
+  id                String   @id @default(uuid())
+  reservationId     String
+  productId         String
+  requestedQuantity Int
+  reservedQuantity  Int      @default(0)
+  consumedQuantity  Int      @default(0)
+  releasedQuantity  Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  reservation       Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  product           Product @relation(fields: [productId], references: [id])
+
+  @@unique([reservationId, productId])
+  @@index([reservationId])
+  @@index([productId])
 }
 
 model InventoryAdjustment {
