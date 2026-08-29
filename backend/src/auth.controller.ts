@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from '@nes
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
-import { ChangePasswordDto, ForgotPasswordDto, LoginDto, ResetPasswordDto } from './auth.dto.js';
+import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from './auth.dto.js';
 import { JwtAuthGuard } from './auth.guards.js';
 import type { AuthenticatedRequest } from './auth.types.js';
 
@@ -14,6 +14,9 @@ export class AuthController {
 
   @Post('login') @HttpCode(200)
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) response: Response) { const result = await this.auth.login(dto); this.setRefreshCookie(response, result.refreshToken); return { success: true, data: { accessToken: result.accessToken, user: result.user } }; }
+
+  @Post('register') @HttpCode(201)
+  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) response: Response) { const result = await this.auth.register(dto); this.setRefreshCookie(response, result.refreshToken); return { success: true, data: { accessToken: result.accessToken, user: result.user } }; }
 
   @Post('refresh') @HttpCode(200)
   async refresh(@Req() request: AuthenticatedRequest, @Body('refreshToken') bodyToken: string, @Res({ passthrough: true }) response: Response) { const result = await this.auth.refresh(request.cookies?.refresh_token ?? bodyToken); this.setRefreshCookie(response, result.refreshToken); return { success: true, data: { accessToken: result.accessToken } }; }
