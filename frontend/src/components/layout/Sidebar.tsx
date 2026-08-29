@@ -57,12 +57,12 @@ export function Sidebar({ isMobileOpen, setMobileOpen }: SidebarProps) {
       
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 border-r bg-card transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col",
+        "fixed inset-y-0 left-0 z-50 w-64 border-r border-white/5 bg-card/80 backdrop-blur-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col shadow-2xl lg:shadow-none",
         isMobileOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="h-16 flex items-center px-6 border-b">
-          <div className="flex items-center gap-2 font-bold text-xl text-primary">
-            <Package className="h-6 w-6" />
+        <div className="h-16 flex items-center px-6 border-b border-white/5">
+          <div className="flex items-center gap-2 font-bold text-xl text-white">
+            <Package className="h-6 w-6 text-primary" />
             <span>OptiStock</span>
           </div>
         </div>
@@ -76,13 +76,16 @@ export function Sidebar({ isMobileOpen, setMobileOpen }: SidebarProps) {
                 to={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative overflow-hidden",
                   isActive 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    ? "text-white bg-primary/20 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]" 
+                    : "text-gray-400 hover:bg-white/5 hover:text-gray-100"
                 )}
               >
-                <item.icon className="h-4 w-4" />
+                {isActive && (
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md" />
+                )}
+                <item.icon className={cn("h-4 w-4 transition-colors", isActive ? "text-primary" : "text-gray-500 group-hover:text-gray-300")} />
                 {item.title}
               </Link>
             )

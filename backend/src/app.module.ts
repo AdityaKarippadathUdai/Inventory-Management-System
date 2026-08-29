@@ -10,9 +10,18 @@ import { MasterDataModule } from './master-data.module.js';
 import { InventoryModule } from './inventory.module.js';
 import { TransfersModule } from './transfers.module.js';
 import { ReservationsModule } from './reservations.module.js';
+import { StockCountsModule } from './stock-counts.module.js';
 
 @Module({
-  imports: [HealthModule, AuthModule, MasterDataModule, InventoryModule, TransfersModule, ReservationsModule],
+  imports: [
+    HealthModule,
+    AuthModule,
+    MasterDataModule,
+    InventoryModule,
+    TransfersModule,
+    ReservationsModule,
+    StockCountsModule,
+  ],
   controllers: [AppController, UsersController],
   providers: [AppService, UsersService, PrismaService],
 })

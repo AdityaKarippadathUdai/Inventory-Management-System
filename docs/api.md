@@ -48,6 +48,175 @@ Full interactive documentation is available at `/api` when the backend is runnin
 ## Phase 2 Authentication
 Authentication uses a short-lived JWT in `Authorization: Bearer <token>`. Refresh tokens are random opaque values stored only as SHA-256 hashes and delivered in an HTTP-only, same-site cookie.
 
+## Phase 7 - Stock Counts & Reconciliation
+
+### Stock Counts
+
+#### Create Stock Count
+- **POST** `/api/v1/stock-counts`
+- **Permission**: `STOCK_COUNT_CREATE`
+- **Request**:
+  ```json
+  {
+    "warehouseId": "uuid",
+    "countType": "FULL|PARTIAL|CYCLE|SPOT_CHECK",
+    "productIds": ["uuid"],
+    "notes": "string (optional)"
+  }
+  ```
+- **Response**: `StockCountResponseDto`
+
+#### List Stock Counts
+- **GET** `/api/v1/stock-counts?page=1&pageSize=20&status=DRAFT`
+- **Permission**: `STOCK_COUNT_VIEW`
+- **Response**: Paginated `StockCountResponseDto`
+
+#### Get Stock Count
+- **GET** `/api/v1/stock-counts/:id`
+- **Permission**: `STOCK_COUNT_VIEW`
+- **Response**: `StockCountResponseDto` with items
+
+#### Start Stock Count
+- **POST** `/api/v1/stock-counts/:id/start`
+- **Permission**: `STOCK_COUNT_EDIT`
+- **Description**: Snapshots current system quantities and transitions to IN_PROGRESS
+- **Response**: Updated `StockCountResponseDto`
+
+#### Update Count Item
+- **PATCH** `/api/v1/stock-counts/:id/items/:itemId`
+- **Permission**: `STOCK_COUNT_EDIT`
+- **Request**:
+  ```json
+  {
+    "countedQuantity": 0,
+    "notes": "string (optional)"
+  }
+  ```
+- **Response**: Updated `StockCountItemResponseDto` with variance calculations
+
+#### Submit Stock Count
+- **POST** `/api/v1/stock-counts/:id/submit`
+- **Permission**: `STOCK_COUNT_EDIT`
+- **Description**: All items must have countedQuantity set
+- **Response**: Updated `StockCountResponseDto` (status=SUBMITTED)
+
+#### Review Stock Count
+- **POST** `/api/v1/stock-counts/:id/review`
+- **Permission**: `STOCK_COUNT_REVIEW`
+- **Description**: Transitions to UNDER_REVIEW
+- **Response**: Updated `StockCountResponseDto`
+
+#### Approve Stock Count
+- **POST** `/api/v1/stock-counts/:id/approve`
+- **Permission**: `STOCK_COUNT_APPROVE`
+- **Response**: Updated `StockCountResponseDto` (status=APPROVED)
+
+#### Reject Stock Count
+- **POST** `/api/v1/stock-counts/:id/reject`
+- **Permission**: `STOCK_COUNT_REVIEW`
+- **Request**:
+  ```json
+  {
+    "reason": "string (required)",
+    "notes": "string (optional)"
+  }
+  ```
+- **Response**: Updated `StockCountResponseDto` (status=REJECTED)
+
+#### Reopen Stock Count
+- **POST** `/api/v1/stock-counts/:id/reopen`
+- **Permission**: `STOCK_COUNT_EDIT`
+- **Description**: Returns REJECTED count to IN_PROGRESS
+- **Response**: Updated `StockCountResponseDto`
+
+#### Cancel Stock Count
+- **POST** `/api/v1/stock-counts/:id/cancel`
+- **Permission**: `STOCK_COUNT_CANCEL`
+- **Request**:
+  ```json
+  {
+    "reason": "string (optional)"
+  }
+  ```
+- **Response**: Updated `StockCountResponseDto` (status=CANCELLED)
+
+#### Variance Report
+- **GET** `/api/v1/stock-counts/report/variances?warehouseId=uuid&severity=CRITICAL`
+- **Permission**: `STOCK_COUNT_VIEW`
+- **Filters**: `warehouseId`, `productId`, `severity`, `countType`, `status`, `dateFrom`, `dateTo`
+- **Response**: Paginated list of `VarianceReportItemDto`
+
+#### Variance Summary
+- **GET** `/api/v1/stock-counts/report/variance-summary?warehouseId=uuid`
+- **Permission**: `STOCK_COUNT_VIEW`
+- **Response**: `VarianceSummaryDto`
+
+#### Reconciliation Preview
+- **GET** `/api/v1/stock-counts/:id/reconciliation-preview`
+- **Permission**: `STOCK_COUNT_RECONCILE`
+- **Description**: Shows potential adjustments and detects stale counts or reserved stock conflicts
+- **Response**: Array of `ReconciliationPreviewDto`
+
+### Reconciliations
+
+#### Create Reconciliation
+- **POST** `/api/v1/stock-counts/:id/reconcile`
+- **Permission**: `STOCK_COUNT_RECONCILE`
+- **Description**: Creates, approves, and executes reconciliation in one call
+- **Response**: `ReconciliationResponseDto` (status=EXECUTED)
+
+#### List Reconciliations
+- **GET** `/api/v1/reconciliations?warehouseId=uuid&page=1&pageSize=20`
+- **Permission**: `RECONCILIATION_VIEW`
+- **Response**: Paginated list of `ReconciliationResponseDto`
+
+#### Get Reconciliation
+- **GET** `/api/v1/reconciliations/:id`
+- **Permission**: `RECONCILIATION_VIEW`
+- **Response**: `ReconciliationResponseDto` with items
+
+#### Approve Reconciliation
+- **POST** `/api/v1/reconciliations/:id/approve`
+- **Permission**: `STOCK_COUNT_RECONCILE`
+- **Response**: Updated `ReconciliationResponseDto` (status=APPROVED)
+
+#### Execute Reconciliation
+- **POST** `/api/v1/reconciliations/:id/execute`
+- **Permission**: `RECONCILIATION_EXECUTE`
+- **Description**: Updates inventory, creates stock transactions, protects reserved stock
+- **Response**: Updated `ReconciliationResponseDto` (status=EXECUTED)
+- **Possible Errors**:
+  - `409 Conflict`: Double reconciliation or reserved stock conflict
+  - `400 Bad Request`: Negative inventory protection or stale count
+
+### Data Models
+
+#### Variance Severity Levels
+```
+NONE:     ≤0.01%
+LOW:      ≤2%
+MEDIUM:   ≤5%
+HIGH:     ≤10%
+CRITICAL: >10%
+```
+
+#### Stock Count Statuses
+- `DRAFT`: Created but not started
+- `IN_PROGRESS`: Count in progress, items can be edited
+- `SUBMITTED`: Count complete, awaiting review
+- `UNDER_REVIEW`: Being reviewed by authorized personnel
+- `APPROVED`: Approved and ready for reconciliation
+- `COMPLETED`: Reconciliation executed
+- `REJECTED`: Count rejected by reviewer
+- `CANCELLED`: Count cancelled
+
+#### Reconciliation Statuses
+- `PENDING`: Awaiting approval
+- `APPROVED`: Approved and ready for execution
+- `EXECUTED`: Inventory updated
+- `FAILED`: Execution failed (reserved stock conflict, etc.)
+- `CANCELLED`: Reconciliation cancelled
+
 | Method | Endpoint | Access |
 |---|---|---|
 | POST | `/api/v1/auth/login` | Public |

@@ -5,6 +5,14 @@ export class LoginDto {
   @IsString() @MinLength(1) password!: string;
 }
 
+export class RegisterDto {
+  @IsString() @MinLength(2) name!: string;
+  @IsEmail() email!: string;
+  @IsString() @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/, {
+    message: 'Password must be at least 10 characters with upper, lower, number, and special character',
+  }) password!: string;
+}
+
 export class ChangePasswordDto {
   @IsString() currentPassword!: string;
   @IsString() @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}$/, {

@@ -3,12 +3,13 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from './prisma.service.js';
 import type { AuthenticatedUser } from './auth.types.js';
 import { CreateTransferDto, ReceiveTransferDto, ReasonDto, TransferListDto } from './transfer.dto.js';
+import { ReservationsService } from './reservations.service.js';
 
 const transitions: Record<string, string[]> = { DRAFT: ['PENDING_APPROVAL', 'CANCELLED'], PENDING_APPROVAL: ['APPROVED', 'REJECTED', 'CANCELLED'], APPROVED: ['IN_TRANSIT', 'CANCELLED'], IN_TRANSIT: ['RECEIVED'], RECEIVED: [], REJECTED: [], CANCELLED: [] };
 const include = { sourceWarehouse: { select: { id: true, code: true, name: true } }, destinationWarehouse: { select: { id: true, code: true, name: true } }, requestedBy: { select: { id: true, name: true, email: true } }, approvedBy: { select: { id: true, name: true, email: true } }, receivedBy: { select: { id: true, name: true, email: true } }, items: { include: { product: { select: { id: true, sku: true, name: true, barcode: true } } } } } as const;
 @Injectable()
 export class TransfersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly reservations: ReservationsService) {}
   private async audit(userId: string, action: string, transferId: string, details?: object) { await this.prisma.auditLog.create({ data: { userId, action, entity: 'TRANSFER', entityId: transferId, details } }); }
   private async warehouse(user: AuthenticatedUser, id: string) { const warehouse = await this.prisma.warehouse.findUnique({ where: { id } }); if (!warehouse || warehouse.status !== 'ACTIVE') throw new NotFoundException('Warehouse not found or inactive'); if (user.role === 'WAREHOUSE_MANAGER' && warehouse.managerId !== user.id) throw new ForbiddenException('Warehouse access is restricted to assigned warehouses'); return warehouse; }
   private transition(current: string, next: string) { if (!transitions[current]?.includes(next)) throw new ConflictException(`Transfer cannot transition from ${current} to ${next}`); }

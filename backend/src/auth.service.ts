@@ -1,11 +1,11 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { JwtSignOptions } from '@nestjs/jwt';
 import { randomBytes, createHash } from 'node:crypto';
 import * as argon2 from 'argon2';
 import { PrismaService } from './prisma.service.js';
 import { AuthenticatedUser } from './auth.types.js';
-import { LoginDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto.js';
+import { LoginDto, RegisterDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto.js';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +22,24 @@ export class AuthService {
     if (!user || !user.isActive || !(await argon2.verify(user.passwordHash, dto.password))) throw new UnauthorizedException('Invalid email or password');
     await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
     await this.audit(user.id, 'LOGIN_SUCCESS', user.id);
+    const authUser: AuthenticatedUser = { id: user.id, email: user.email, role: user.role.name, permissions: user.role.permissions.map(({ permission }) => permission.name) };
+    return { accessToken: await this.jwt.signAsync(authUser, this.accessTokenOptions()), refreshToken: await this.createRefreshToken(user.id), user: this.publicUser(user) };
+  }
+
+  async register(dto: RegisterDto) {
+    const existing = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
+    if (existing) throw new ConflictException('Email already in use');
+    const viewerRole = await this.prisma.role.findUniqueOrThrow({ where: { name: 'VIEWER' } });
+    const user = await this.prisma.user.create({
+      data: {
+        name: dto.name,
+        email: dto.email.toLowerCase(),
+        passwordHash: await argon2.hash(dto.password),
+        roleId: viewerRole.id,
+      },
+      include: { role: { include: { permissions: { include: { permission: true } } } } },
+    });
+    await this.audit(user.id, 'USER_REGISTERED', user.id);
     const authUser: AuthenticatedUser = { id: user.id, email: user.email, role: user.role.name, permissions: user.role.permissions.map(({ permission }) => permission.name) };
     return { accessToken: await this.jwt.signAsync(authUser, this.accessTokenOptions()), refreshToken: await this.createRefreshToken(user.id), user: this.publicUser(user) };
   }

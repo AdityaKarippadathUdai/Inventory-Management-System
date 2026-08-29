@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -33,37 +33,39 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 235 86% 65%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Deeper premium background */
+    --background: 230 25% 7%;
     --foreground: 210 40% 98%;
 
-    --card: 217 33% 10%;
+    --card: 230 25% 10%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 230 25% 9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 235 86% 65%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Vibrant Indigo */
+    --primary: 245 85% 65%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 230 20% 16%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 230 20% 16%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 245 85% 65%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 235 86% 65%;
+    --border: 230 20% 16%;
+    --input: 230 20% 16%;
+    --ring: 245 85% 65%;
   }
 }
 
@@ -72,6 +74,28 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased font-sans transition-colors duration-300;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-background/60 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)];
+  }
+  .glass-card {
+    @apply bg-card/70 backdrop-blur-lg border border-white/5 shadow-lg transition-all hover:bg-card/80;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400;
+  }
+  
+  /* Mesh gradient background for auth pages */
+  .bg-mesh-dark {
+    background-color: #0d1117;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(225,39%,30%,0.2) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, hsla(339,49%,30%,0.2) 0, transparent 50%);
   }
 }

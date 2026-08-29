@@ -6,20 +6,30 @@ import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider } from "./auth/AuthContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { Login } from "./pages/Login";
+import { Register } from "./pages/Register";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import { Profile } from "./pages/Profile";
 import { Users } from "./pages/Users";
 import { MasterDataPage } from "./pages/MasterDataPage";
 import { Inventory } from "./pages/Inventory";
 import { Transfers } from "./pages/Transfers";
+import { Reservations } from "./pages/Reservations";
+import { StockCounts } from "./pages/StockCounts";
+import { StockCountCreate } from "./pages/StockCountCreate";
+import { StockCountDetail } from "./pages/StockCountDetail";
+import { StockCountEntry } from "./pages/StockCountEntry";
+import { Reconciliation } from "./pages/Reconciliation";
+import { ReconciliationsPage } from "./pages/Reconciliations";
+import { ReconciliationDetail } from "./pages/ReconciliationDetail";
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="optistock-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="optistock-theme">
       <BrowserRouter>
         <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route element={<ProtectedRoute />}>
           <Route path="/" element={<MainLayout />}>
@@ -32,8 +42,14 @@ function App() {
             <Route path="categories" element={<MasterDataPage resource="categories" />} />
             <Route path="inventory" element={<Inventory />} />
             <Route path="transfers" element={<Transfers />} />
-            <Route path="reservations" element={<PlaceholderPage title="Reservations" description="Manage temporary stock reservations for orders." />} />
-            <Route path="reconciliation" element={<PlaceholderPage title="Reconciliation" description="Perform physical counts and reconcile inventory." />} />
+            <Route path="reservations" element={<Reservations />} />
+            <Route path="stock-counts" element={<StockCounts />} />
+            <Route path="stock-counts/new" element={<StockCountCreate />} />
+            <Route path="stock-counts/:id" element={<StockCountDetail />} />
+            <Route path="stock-counts/:id/count" element={<StockCountEntry />} />
+            <Route path="stock-counts/:id/reconciliation" element={<Reconciliation />} />
+            <Route path="reconciliations" element={<ReconciliationsPage />} />
+            <Route path="reconciliations/:id" element={<ReconciliationDetail />} />
             <Route path="suppliers" element={<MasterDataPage resource="suppliers" />} />
             <Route path="purchase-orders" element={<PlaceholderPage title="Purchase Orders" description="Create and manage inbound purchase orders." />} />
             <Route path="returns" element={<PlaceholderPage title="Returns" description="Process outbound and inbound returns." />} />
