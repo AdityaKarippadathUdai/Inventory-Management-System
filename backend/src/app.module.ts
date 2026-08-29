@@ -9,9 +9,10 @@ import { PrismaService } from './prisma.service.js';
 import { MasterDataModule } from './master-data.module.js';
 import { InventoryModule } from './inventory.module.js';
 import { TransfersModule } from './transfers.module.js';
+import { ReservationsModule } from './reservations.module.js';
 
 @Module({
-  imports: [HealthModule, AuthModule, MasterDataModule, InventoryModule, TransfersModule],
+  imports: [HealthModule, AuthModule, MasterDataModule, InventoryModule, TransfersModule, ReservationsModule],
   controllers: [AppController, UsersController],
   providers: [AppService, UsersService, PrismaService],
 })
